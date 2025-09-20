@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // ======== DATOS EN MEMORIA ========
 // premios grandes que salen solo 1 vez al día
 const premiosGrandes = [
-  "30% extra (en mi segunda carga)",
+  "30% extra (en tu segunda carga)",
   "500 fichas (sin carga, no retirables)"
 ];
 
@@ -31,15 +31,27 @@ const premiosNormales = [
   "300 fichas (sin carga, no retirables)"
 ];
 
-// cajeros globales
+// cajeros globales (con Lucas)
 const cajeros = [
   { nombre: "Joaki", numero: "1123365501" },
-  { nombre: "Facu",  numero: "1125127839" }
+  { nombre: "Facu",  numero: "1125127839" },
+  { nombre: "Lucas", numero: "1171334027" }
 ];
 
 let currentCajeroIndex = 0; // round-robin para primer asignación
 let premioGrandeDelDia = null;
 let fechaPremioGrande = null;
+
+// ======== FRASES RANDOM DE SUERTE ========
+const frasesSuerte = [
+  "La suerte favorece a los audaces.",
+  "Hoy puede ser tu día de suerte 🍀",
+  "¿Preparado para llevarte el premio mayor?",
+  "El azar es amigo de los que juegan.",
+  "¡Un giro más puede cambiarlo todo!",
+  "Jugá responsablemente y divertite 🃏",
+  "La fortuna sonríe a los valientes."
+];
 
 // ======== FUNCIONES ========
 function esNuevoDia() {
@@ -71,6 +83,9 @@ app.post('/girar', async (req, res) => {
 
   const userData = await redis.hgetall(key);
 
+  // Elegir frase random de suerte
+  const fraseSuerte = frasesSuerte[Math.floor(Math.random() * frasesSuerte.length)];
+
   if (userData && Object.keys(userData).length > 0) {
     const lastSpinTime = parseInt(userData.lastSpinTime || "0", 10);
     const cajeroIndex = parseInt(userData.cajeroIndex || "0", 10);
@@ -85,7 +100,8 @@ app.post('/girar', async (req, res) => {
         yaGiro: true,
         mensaje: `⏳ Podrás volver a girar en ${horas}h ${mins}m`,
         premio: lastPrize,
-        cajero: cajeros[cajeroIndex]
+        cajero: cajeros[cajeroIndex],
+        fraseSuerte
       });
     }
 
@@ -98,7 +114,8 @@ app.post('/girar', async (req, res) => {
     return res.json({
       yaGiro: false,
       premio: nuevoPremio,
-      cajero: cajeros[cajeroIndex]
+      cajero: cajeros[cajeroIndex],
+      fraseSuerte
     });
   }
 
@@ -116,7 +133,8 @@ app.post('/girar', async (req, res) => {
   res.json({
     yaGiro: false,
     premio,
-    cajero
+    cajero,
+    fraseSuerte
   });
 });
 
