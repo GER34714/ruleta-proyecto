@@ -197,7 +197,7 @@ function requestResult(){
       winnerReturn.textContent = "⏳ Podrás volver a girar en 24 horas";
       winnerBtn.onclick = () => {
         const msg = encodeURIComponent(
-          `Hola ${data.cajero.nombre}! Gané ${data.premio} el ${new Date().toLocaleString()} y quisiera reclamarlo.`
+          `Hola ${data.cajero.nombre}! Gané ${data.premio} el ${new Date().toLocaleString()} y quisiera solicitarlo,gracias.`
         );
         window.open(`https://wa.me/54${data.cajero.numero}?text=${msg}`,"_blank");
       };
