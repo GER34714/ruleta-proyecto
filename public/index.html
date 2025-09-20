@@ -13,28 +13,58 @@
 <meta property="og:site_name" content="FORTUNA PLAY™">
 
 <style>
-body { margin:0; font-family: Arial Black, sans-serif; text-align:center; color:#0ff; background:url('https://iili.io/KCkmp4I.md.webp') no-repeat center center fixed; background-size:cover; text-shadow:0 0 5px #000,0 0 8px #000; }
-.logo-container { display:flex; justify-content:center; align-items:center; flex-direction:column; margin:5px 0; width:100%; }
-#logoTop, #finalImage { max-width:45%; width:100%; height:auto; display:block; margin:0 auto 5px auto; filter:drop-shadow(0 0 10px #0ff); animation: neonLogo 2s infinite alternate; }
-@keyframes neonLogo { 0%{filter:drop-shadow(0 0 10px #0ff);} 25%{filter:drop-shadow(0 0 15px #f0f);} 50%{filter:drop-shadow(0 0 10px #ff0);} 75%{filter:drop-shadow(0 0 15px #0f0);} 100%{filter:drop-shadow(0 0 10px #0ff);} }
-.textos-superiores { text-align:center; font-size:clamp(1rem,2.5vw,1.3rem); font-weight:bold; line-height:1.6; margin:10px 0 15px 0; color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
-#wheelContainer { position:relative; width:90vw; max-width:340px; margin:0 auto 5px auto; }
+body { margin:0; font-family: Arial Black, sans-serif; text-align:center; color:#0ff;
+  background:url('https://iili.io/KCkmp4I.md.webp') no-repeat center center fixed;
+  background-size:cover; text-shadow:0 0 5px #000,0 0 8px #000; }
+.logo-container { display:flex; justify-content:center; align-items:center;
+  flex-direction:column; margin:5px 0; width:100%; }
+#logoTop, #finalImage { max-width:45%; width:100%; height:auto; display:block;
+  margin:0 auto 5px auto; filter:drop-shadow(0 0 10px #0ff);
+  animation: neonLogo 2s infinite alternate; }
+@keyframes neonLogo {
+  0%{filter:drop-shadow(0 0 10px #0ff);}
+  25%{filter:drop-shadow(0 0 15px #f0f);}
+  50%{filter:drop-shadow(0 0 10px #ff0);}
+  75%{filter:drop-shadow(0 0 15px #0f0);}
+  100%{filter:drop-shadow(0 0 10px #0ff);}
+}
+.textos-superiores { text-align:center; font-size:clamp(1rem,2.5vw,1.3rem);
+  font-weight:bold; line-height:1.6; margin:10px 0 15px 0; color:#0ff;
+  text-shadow:0 0 5px #000,0 0 8px #000; }
+#wheelContainer { position:relative; width:90vw; max-width:340px;
+  margin:0 auto 5px auto; }
 #wheelCanvas { width:100%; height:auto; }
-#arrow { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:6px; height:35px; background:#fff; border-radius:2px; z-index:10; }
-button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem); border:none; border-radius:50px; cursor:pointer; transition:.3s; }
-#spinButton { background:#ff0; color:#4b0082; font-weight:bold; box-shadow:0 0 10px #000; }
-#winnerButton { margin-top:10px; padding:12px 25px; font-size:clamp(1rem,2vw,1.2rem); border-radius:50px; background:#25D366; color:#fff; cursor:pointer; border:none; }
+#arrow { position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+  width:6px; height:35px; background:#fff; border-radius:2px; z-index:10; }
+button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem);
+  border:none; border-radius:50px; cursor:pointer; transition:.3s; }
+#spinButton { background:#ff0; color:#4b0082; font-weight:bold;
+  box-shadow:0 0 10px #000; }
+#winnerButton { margin-top:10px; padding:12px 25px; font-size:clamp(1rem,2vw,1.2rem);
+  border-radius:50px; background:#25D366; color:#fff; cursor:pointer; border:none; }
 #winnerButton:hover { transform:scale(1.08); }
-#closePopup { margin-top:10px; padding:10px 20px; font-size:clamp(1rem,2vw,1.1rem); border-radius:50px; background:#ff3333; color:#fff; border:none; cursor:pointer; }
-#closePopup:hover { transform:scale(1.05); }
-#winnerPopup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); background:rgba(0,0,0,0.95); padding:clamp(15px,4vw,25px); border-radius:20px; color:#0ff; font-size:clamp(1rem,3vw,1.4rem); text-align:center; z-index:1000; width:90%; max-width:400px; max-height:80vh; overflow-y:auto; border:3px solid #0ff; box-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px #0ff; transition:transform .3s ease; }
+#closeButton { margin-top:10px; padding:10px 20px; font-size:clamp(1rem,2vw,1.2rem);
+  border-radius:50px; background:#ff4444; color:#fff; cursor:pointer; border:none; }
+#winnerPopup { position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  background:rgba(0,0,0,0.95); padding:clamp(15px,4vw,25px);
+  border-radius:20px; color:#0ff; font-size:clamp(1rem,3vw,1.4rem);
+  text-align:center; z-index:1000; width:90%; max-width:400px; max-height:80vh;
+  overflow-y:auto; border:3px solid #0ff;
+  box-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px #0ff; }
 #winnerPopup.show { transform:translate(-50%,-50%) scale(1); }
-#winnerMessage,#winnerDate,#winnerNote,#winnerReturn { margin:5px 0; }
-#winnerNote { font-weight:bold; color:#0ff; }
-#winnerReturn { font-weight:bold; color:#0ff; font-size:clamp(1rem,2.5vw,1.2rem); }
-#legal,#rights { font-size:clamp(0.7rem,2vw,0.9rem); margin:2px 0; color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
-#dailyCounter { margin-top:3px; font-size:clamp(0.8rem,2vw,0.95rem); color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
-@media(max-width:600px){#logoTop{max-width:60%;}#wheelContainer{width:85vw;}button{padding:10px 20px;}}
+#winnerMessage,#winnerDate,#winnerReturn { margin:5px 0; }
+#winnerReturn { font-weight:bold; color:#0ff;
+  font-size:clamp(1rem,2.5vw,1.2rem); }
+#legal,#rights { font-size:clamp(0.7rem,2vw,0.9rem); margin:2px 0;
+  color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
+#dailyCounter { margin-top:3px; font-size:clamp(0.8rem,2vw,0.95rem);
+  color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
+@media(max-width:600px){
+  #logoTop{max-width:60%;}
+  #wheelContainer{width:85vw;}
+  button{padding:10px 20px;}
+}
 </style>
 </head>
 <body>
@@ -60,10 +90,9 @@ button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem); bord
 <div id="winnerPopup">
   <div id="winnerMessage"></div>
   <div id="winnerDate"></div>
-  <div id="winnerNote">¡SÁCALE CAPTURA A ESTA PANTALLA PARA RECLAMAR TU PREMIO!</div>
-  <div id="winnerReturn">Volvé mañana a la misma hora para reclamar otro premio</div>
+  <div id="winnerReturn"></div>
   <button id="winnerButton">Solicitar premio</button>
-  <button id="closePopup">Cerrar</button>
+  <button id="closeButton">Cerrar</button>
 </div>
 
 <div class="logo-container">
@@ -74,44 +103,35 @@ button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem); bord
 <div id="rights">Todos los derechos reservados FORTUNA PLAY™</div>
 
 <script>
-// === Premios en pantalla (su primera carga) ===
-const prizes = [
-  "10% extra (en su primera carga)",
-  "15% extra (en su primera carga)",
-  "20% extra (en su primera carga)",
-  "30% extra (en su segunda carga)",
-  "1000 fichas (sin carga,no ret.)",
-  "500 fichas (sin carga,no ret.)",
-  "300 fichas (sin carga ,no ret.)"
-];
+const spinBtn = document.getElementById('spinButton');
+const popup = document.getElementById('winnerPopup');
+const winnerMsg = document.getElementById('winnerMessage');
+const winnerDate = document.getElementById('winnerDate');
+const winnerReturn = document.getElementById('winnerReturn');
+const winnerBtn = document.getElementById('winnerButton');
+const closeBtn  = document.getElementById('closeButton');
+const dailyCounter = document.getElementById('dailyCounter');
+
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
 
 function getUserId(){
   let uid = localStorage.getItem("ruleta_uid");
-  if (!uid) {
+  if(!uid){
     uid = "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
     localStorage.setItem("ruleta_uid", uid);
   }
   return uid;
 }
 
-const spinBtn = document.getElementById('spinButton');
-const popup = document.getElementById('winnerPopup');
-const winnerMsg = document.getElementById('winnerMessage');
-const winnerDate = document.getElementById('winnerDate');
-const winnerBtn = document.getElementById('winnerButton');
-const closePopup = document.getElementById('closePopup');
-const dailyCounter = document.getElementById('dailyCounter');
-
-const canvas = document.getElementById('wheelCanvas');
-const ctx = canvas.getContext('2d');
 const colors = ["#FF0000","#00FF00","#0000FF","#FFFF00","#FF00FF","#00FFFF","#FFA500"];
-const size = prizes.length;
-const angleStep = (2*Math.PI)/size;
+let numSegments = 7;
+let angleStep = (2*Math.PI)/numSegments;
 let currentAngle = 0;
 
 function drawWheel(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  for(let i=0;i<size;i++){
+  for(let i=0;i<numSegments;i++){
     ctx.beginPath();
     ctx.moveTo(170,170);
     ctx.arc(170,170,170,currentAngle+i*angleStep,currentAngle+(i+1)*angleStep);
@@ -126,56 +146,69 @@ drawWheel();
 
 function spinWheel(){
   spinBtn.disabled = true;
-  const spins = 5 + Math.random()*3;
-  const endAngle = (2*Math.PI)*spins + Math.random()*2*Math.PI;
-  let start = null;
-  function animate(ts){
-    if(!start) start = ts;
-    const progress = (ts - start)/3500;
-    if(progress < 1){
-      currentAngle = endAngle * easeOutCubic(progress);
-      drawWheel();
+  const spinTime = 4000;
+  const spinAngle = Math.random()*360 + 1800;
+  const startAngle = currentAngle;
+  const targetAngle = startAngle + spinAngle;
+  const startTime = performance.now();
+
+  function animate(time){
+    let elapsed = time - startTime;
+    if(elapsed < spinTime){
+      const progress = elapsed / spinTime;
+      currentAngle = startAngle + (spinAngle * (1 - Math.pow(1 - progress, 3)));
+      drawRotatedWheel(currentAngle);
       requestAnimationFrame(animate);
     } else {
-      currentAngle = endAngle;
-      drawWheel();
-      fetchResult();
+      currentAngle = targetAngle;
+      drawRotatedWheel(currentAngle);
+      requestResult();
     }
   }
   requestAnimationFrame(animate);
 }
-function easeOutCubic(t){ return (--t)*t*t+1; }
 
-function fetchResult(){
-  fetch('/girar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ usuarioId: getUserId() })
+function drawRotatedWheel(angle){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();
+  ctx.translate(170,170);
+  ctx.rotate(angle * Math.PI / 180);
+  ctx.translate(-170,-170);
+  drawWheel();
+  ctx.restore();
+}
+
+function requestResult(){
+  fetch("/girar", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ usuarioId:getUserId() })
   })
   .then(r => r.json())
   .then(data => {
     if(data.yaGiro){
-      // Muestra premio anterior + tiempo restante
-      winnerMsg.textContent = `Ya giraste 🎡 Tu premio fue: ${data.premio || '---'}`;
-      winnerDate.textContent = data.mensaje;
+      winnerMsg.textContent = "Ganaste 🎉 " + (data.premio || "") + " 🎉";
+      winnerReturn.textContent = data.mensaje;
+      winnerDate.textContent = "";
     } else {
-      winnerMsg.textContent = `Ganaste🎉 ${data.premio} 🎉`;
-      winnerDate.textContent = `Fecha y hora: ${new Date().toLocaleString()}`;
+      winnerMsg.textContent = "Ganaste 🎉 " + data.premio + " 🎉";
+      winnerDate.textContent = "Fecha y hora: " + new Date().toLocaleString();
+      winnerReturn.textContent = "⏳ Podrás volver a girar en 24 horas";
       winnerBtn.onclick = () => {
         const msg = encodeURIComponent(
-          `Hola ${data.cajero.nombre}! Gané ${data.premio.replace('su','mi')} el ${new Date().toLocaleString()} y quisiera reclamarlo.`
+          `Hola ${data.cajero.nombre}! Gané ${data.premio} el ${new Date().toLocaleString()} y quisiera reclamarlo.`
         );
-        window.open(`https://wa.me/54${data.cajero.numero}?text=${msg}`,'_blank');
+        window.open(`https://wa.me/54${data.cajero.numero}?text=${msg}`,"_blank");
       };
     }
     popup.classList.add('show');
   })
-  .catch(()=>{ winnerMsg.textContent="Error de conexión"; popup.classList.add('show'); })
-  .finally(()=>{ spinBtn.disabled=false; });
+  .catch(() => { alert("Error de conexión. Intenta más tarde."); })
+  .finally(() => { spinBtn.disabled = false; });
 }
 
 spinBtn.addEventListener('click', spinWheel);
-closePopup.addEventListener('click', () => popup.classList.remove('show'));
+closeBtn.addEventListener('click', () => popup.classList.remove('show'));
 </script>
 </body>
 </html>
