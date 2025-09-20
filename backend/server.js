@@ -7,81 +7,138 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ======== CONFIG ========
 const PORT = process.env.PORT || 3000;
-// 👉 Pega aquí tu URL interna de Render Key-Value (Internal Connection)
-const redis = new Redis("redis://red-d378b33uibrs738qtkjg:6379");
+// Usa tu URL interna de Redis en Render
+const redis = new Redis(process.env.REDIS_URL || 'redis://red-d378b33uibrs738qtkjg:6379');
 
-// ====== Datos ======
+// sirve el front (carpeta public que estará al lado de backend)
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// ======== DATOS EN MEMORIA ========
+// premios grandes que salen solo 1 vez al día
+const premiosGrandes = [
+  "30% extra (en mi segunda carga)",
+  "500 fichas (sin carga, no retirables)"
+];
+
+// premios normales que se intercalan
+const premiosNormales = [
+  "10% extra (en mi primera carga)",
+  "15% extra (en mi primera carga)",
+  "20% extra (en mi primera carga)",
+  "100 fichas (sin carga, no retirables)",
+  "300 fichas (sin carga, no retirables)"
+];
+
+// cajeros globales
 const cajeros = [
   { nombre: "Joaki", numero: "1123365501" },
   { nombre: "Facu",  numero: "1125127839" }
 ];
 
-const premios = [
-  "10% extra (en tu primera carga)",
-  "15% extra (en tu primera carga)",
-  "20% extra (en tu primera carga)",
-  "30% extra (en tu segunda carga)",
-  "100 fichas (sin carga, no retirables)",
-  "500 fichas (sin carga, no retirables)",
-  "300 fichas (sin carga, no retirables)"
-];
+let currentCajeroIndex = 0; // round-robin para primer asignación
+let premioGrandeDelDia = null;
+let fechaPremioGrande = null;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+// ======== FUNCIONES ========
+function esNuevoDia() {
+  const hoy = new Date().toDateString();
+  return fechaPremioGrande !== hoy;
+}
 
-// ====== API GIRO ======
+function obtenerPremio() {
+  const hoy = new Date().toDateString();
+  if (esNuevoDia()) {
+    // elegir un premio grande nuevo
+    premioGrandeDelDia = premiosGrandes[Math.floor(Math.random() * premiosGrandes.length)];
+    fechaPremioGrande = hoy;
+    return premioGrandeDelDia;
+  } else {
+    // premios normales intercalados
+    return premiosNormales[Math.floor(Math.random() * premiosNormales.length)];
+  }
+}
+
+// ======== ENDPOINT GIRO ========
 app.post('/girar', async (req, res) => {
   const { usuarioId } = req.body;
   if (!usuarioId) return res.status(400).json({ error: "Falta usuarioId" });
 
-  const userKey = `user:${usuarioId}`;
+  const key = `user:${usuarioId}`;
   const now = Date.now();
-  const userData = await redis.hgetall(userKey);
+  const DAY_MS = 24 * 60 * 60 * 1000;
 
-  // --- Si ya giró en las últimas 24h ---
-  if (userData.lastSpinTime && now - Number(userData.lastSpinTime) < DAY_MS) {
-    const remaining = DAY_MS - (now - Number(userData.lastSpinTime));
-    const horas = Math.floor(remaining / (1000*60*60));
-    const mins  = Math.floor((remaining % (1000*60*60)) / (1000*60));
+  let userData = await redis.hgetall(key);
+  // Si Redis devolvió algo que no sea hash, hgetall rompe => por eso limpiamos después
+
+  if (userData && Object.keys(userData).length > 0) {
+    const lastSpinTime = parseInt(userData.lastSpinTime || "0", 10);
+    const cajeroIndex = parseInt(userData.cajeroIndex || "0", 10);
+    const lastPrize = userData.lastPrize || "";
+
+    if (now - lastSpinTime < DAY_MS) {
+      // dentro del día => mismo premio
+      const remaining = DAY_MS - (now - lastSpinTime);
+      const horas = Math.floor(remaining / (1000*60*60));
+      const mins  = Math.floor((remaining % (1000*60*60)) / (1000*60));
+      return res.json({
+        yaGiro: true,
+        mensaje: `⏳ Podrás volver a girar en ${horas}h ${mins}m`,
+        premio: lastPrize,
+        cajero: cajeros[cajeroIndex]
+      });
+    }
+
+    // Nuevo día -> nuevo premio
+    const nuevoPremio = obtenerPremio();
+    await redis.hset(key, {
+      lastSpinTime: now,
+      lastPrize: nuevoPremio
+    });
     return res.json({
-      yaGiro: true,
-      premio: userData.lastPrize, // mantiene su premio del día
-      mensaje: `⏳ Podrás volver a girar en ${horas}h ${mins}m`,
-      cajero: JSON.parse(userData.cajero)
+      yaGiro: false,
+      premio: nuevoPremio,
+      cajero: cajeros[cajeroIndex]
     });
   }
 
-  // --- Cajero fijo ---
-  let cajero;
-  if (userData.cajero) {
-    cajero = JSON.parse(userData.cajero);
-  } else {
-    const index = await redis.incr('globalCajeroIndex');
-    cajero = cajeros[(index - 1) % cajeros.length];
-  }
+  // Usuario nuevo => asignar cajero y premio
+  const cajero = cajeros[currentCajeroIndex % cajeros.length];
+  currentCajeroIndex++;
+  const premio = obtenerPremio();
 
-  // --- Premio NUEVO cada vez que pasan 24h ---
-  const premio = premios[Math.floor(Math.random() * premios.length)];
-
-  // --- Guardar datos del usuario ---
-  await redis.hset(userKey, {
-    cajero: JSON.stringify(cajero),
+  await redis.hset(key, {
+    cajeroIndex: currentCajeroIndex - 1,
     lastSpinTime: now,
     lastPrize: premio
   });
-  await redis.pexpire(userKey, DAY_MS * 30); // conservar datos 30 días
 
-  return res.json({
+  res.json({
     yaGiro: false,
     premio,
     cajero
   });
 });
 
-// Endpoint de salud para cron-jobs
+// ======== RUTA DE SALUD ========
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
-// Servir el frontend
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// ======== 🔧 RUTA TEMPORAL PARA LIMPIAR REDIS ========
+app.get('/fix-redis', async (req, res) => {
+  try {
+    const keys = await redis.keys('user:*');   // busca las claves de usuario
+    if (keys.length) {
+      await redis.del(...keys);                // borra todas
+    }
+    res.send(`✅ Redis limpio. Borradas ${keys.length} claves.`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error limpiando Redis');
+  }
+});
 
-app.listen(PORT, () => console.log(`✅ Backend corriendo en http://localhost:${PORT}`));
+// ======== INICIO SERVIDOR ========
+app.listen(PORT, () =>
+  console.log(`✅ Backend corriendo en http://localhost:${PORT}`)
+);
