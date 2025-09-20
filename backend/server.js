@@ -24,9 +24,9 @@ const premiosGrandes = [
 
 // premios normales que se intercalan
 const premiosNormales = [
-  "10% extra (en mi primera carga)",
-  "15% extra (en mi primera carga)",
-  "20% extra (en mi primera carga)",
+  "10% extra (en tu primera carga)",
+  "15% extra (en tu primera carga)",
+  "20% extra (en tu primera carga)",
   "100 fichas (sin carga, no retirables)",
   "300 fichas (sin carga, no retirables)"
 ];
