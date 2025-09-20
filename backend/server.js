@@ -1,184 +1,109 @@
-// backend/server.js
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-
-let Redis;              // ioredis es opcional
-try { Redis = require('ioredis'); } catch { /* si no está, seguimos en memoria */ }
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const Redis = require("ioredis");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// sirve el front (carpeta public al lado de backend)
-app.use(express.static(path.join(__dirname, '..', 'public')));
-
+// ------------ CONFIG ------------
 const PORT = process.env.PORT || 3000;
+// ⚡ Podes dejarlo así o usar process.env.KV_URL en Environment de Render
+const redis = new Redis(process.env.KV_URL || "redis://red-d378b33uibrs738qtkjg:6379");
 
-// ====== Key-Value (Render) opcional ======
-const KV_URL = process.env.KV_URL || process.env.REDIS_URL || '';
-const useRedis = Boolean(KV_URL && Redis);
-
-let redis = null;
-if (useRedis) {
-  redis = new Redis(KV_URL);
-  redis.on('error', (e) => console.error('Redis error:', e?.message || e));
-  console.log('[KV] Usando Render Key-Value');
-} else {
-  console.warn('[KV] No se detectó KV_URL/REDIS_URL o ioredis. Usando memoria.');
-}
-
-// ====== almacenamiento ======
-const memStore = {}; // fallback en memoria
-
-async function getJSON(key, fallback) {
-  if (redis) {
-    const raw = await redis.get(key);
-    if (!raw) return fallback;
-    try { return JSON.parse(raw); } catch { return fallback; }
-  } else {
-    return key in memStore ? memStore[key] : fallback;
-  }
-}
-
-async function setJSON(key, obj) {
-  if (redis) {
-    await redis.set(key, JSON.stringify(obj));
-  } else {
-    memStore[key] = obj;
-  }
-}
-
-async function getStr(key, fallback = null) {
-  if (redis) {
-    const val = await redis.get(key);
-    return val ?? fallback;
-  } else {
-    return key in memStore ? String(memStore[key]) : fallback;
-  }
-}
-
-async function setStr(key, val) {
-  if (redis) {
-    await redis.set(key, String(val));
-  } else {
-    memStore[key] = String(val);
-  }
-}
-
-// ====== datos de negocio ======
-const DEFAULT_CAJEROS = [
-  { nombre: "Joaki", numero: "1123365501" },
-  { nombre: "Facu",  numero: "1125127839" }
-];
-
-const PREMIOS = [
-  "10% extra (en mi primera carga)",
-  "15% extra (en mi primera carga)",
-  "20% extra (en mi primera carga)",
-  "30% extra (en mi segunda carga)",
+// Cajeros y premios
+const premios = [
+  "10% extra (en su primera carga)",   // <-- texto visible al usuario
+  "15% extra (en su primera carga)",
+  "20% extra (en su primera carga)",
+  "30% extra (en su segunda carga)",
   "100 fichas (sin carga, no retirables)",
   "500 fichas (sin carga, no retirables)",
   "300 fichas (sin carga, no retirables)"
 ];
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const cajeros = [
+  { nombre: "Joaki", numero: "1123365501" },
+  { nombre: "Facu",  numero: "1125127839" }
+];
 
-async function loadCajeros() {
-  const saved = await getJSON('cajeros', null);
-  return Array.isArray(saved) && saved.length ? saved : DEFAULT_CAJEROS;
-}
-async function getIndex() {
-  const n = await getStr('currentCajeroIndex', '0');
-  const parsed = parseInt(n, 10);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-async function setIndex(n) {
-  await setStr('currentCajeroIndex', String(n));
-}
+// ------------ FRONTEND ------------
+app.use(express.static(path.join(__dirname, "..", "public")));
 
-async function getUser(uid) {
-  return await getJSON(`user:${uid}`, null);
-}
-async function setUser(uid, data) {
-  await setJSON(`user:${uid}`, data);
+// ------------ HELPERS ------------
+async function getState() {
+  // Recupera o crea el estado global
+  const raw = await redis.get("ruleta_state");
+  if (raw) return JSON.parse(raw);
+  const init = { currentCajeroIndex: 0 };
+  await redis.set("ruleta_state", JSON.stringify(init));
+  return init;
 }
 
-// ====== API ======
-app.post('/girar', async (req, res) => {
+async function saveState(state) {
+  await redis.set("ruleta_state", JSON.stringify(state));
+}
+
+async function getUser(usuarioId) {
+  const raw = await redis.get(`user:${usuarioId}`);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function saveUser(usuarioId, data) {
+  await redis.set(`user:${usuarioId}`, JSON.stringify(data));
+}
+
+// ------------ RUTAS ------------
+app.post("/girar", async (req, res) => {
   try {
-    const { usuarioId } = req.body || {};
+    const { usuarioId } = req.body;
     if (!usuarioId) return res.status(400).json({ error: "Falta usuarioId" });
 
     const now = Date.now();
-    const cajeros = await loadCajeros();
-    if (!cajeros.length) {
-      return res.status(500).json({ error: "No hay cajeros configurados" });
-    }
+    const DAY_MS = 24 * 60 * 60 * 1000;
 
-    let u = await getUser(usuarioId);
+    // Datos de usuario y estado global
+    const user = await getUser(usuarioId);
+    const state = await getState();
 
-    // dentro de 24h => cooldown (no reasignamos cajero)
-    if (u && now - u.lastSpinTime < DAY_MS) {
-      const remaining = DAY_MS - (now - u.lastSpinTime);
-      const horas = Math.floor(remaining / (1000*60*60));
-      const mins  = Math.floor((remaining % (1000*60*60)) / (1000*60));
+    // Si ya giró en las últimas 24 hs
+    if (user && now - user.lastSpinTime < DAY_MS) {
+      const remaining = DAY_MS - (now - user.lastSpinTime);
+      const horas = Math.floor(remaining / (1000 * 60 * 60));
+      const mins = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
       return res.json({
         yaGiro: true,
-        mensaje: `⏳ Podrás volver a girar en ${horas}h ${mins}m`,
-        premio: u.lastPrize || null
+        premio: user.premio,       // mostramos el mismo premio
+        cajero: user.cajero,       // mismo cajero
+        mensaje: `⏳ Podrás volver a girar en ${horas}h ${mins}m`
       });
     }
 
-    // asignar/mantener cajero fijo
-    let cajero;
-    if (u && typeof u.cajeroIndex === 'number') {
-      cajero = cajeros[u.cajeroIndex % cajeros.length];
-    } else {
-      const idx = await getIndex();
-      cajero = cajeros[idx % cajeros.length];
-      if (!u) u = {};
-      u.cajeroIndex = idx % cajeros.length;
-      await setIndex(idx + 1);
-    }
+    // Nuevo giro -> asignar cajero y premio
+    const cajero = cajeros[state.currentCajeroIndex % cajeros.length];
+    state.currentCajeroIndex++;
 
-    // premio aleatorio
-    const premio = PREMIOS[Math.floor(Math.random() * PREMIOS.length)];
+    const premio = premios[Math.floor(Math.random() * premios.length)];
 
-    // guardar usuario
-    u.lastSpinTime = now;
-    u.lastPrize = premio;
-    await setUser(usuarioId, u);
-
-    return res.json({
-      yaGiro: false,
+    await saveUser(usuarioId, {
       cajero,
-      premio
+      premio,
+      lastSpinTime: now
     });
+    await saveState(state);
+
+    res.json({ yaGiro: false, cajero, premio });
   } catch (err) {
-    console.error('Error en /girar:', err);
-    return res.status(500).json({ error: 'Error interno' });
+    console.error(err);
+    res.status(500).json({ error: "Error interno" });
   }
 });
 
-// setear cajeros por API (opcional)
-app.post('/api/cajeros/init', async (req, res) => {
-  try {
-    const { cajeros } = req.body || {};
-    if (!Array.isArray(cajeros) || !cajeros.length) {
-      return res.status(400).json({ error: "Mandá 'cajeros' como array con al menos 1 elemento." });
-    }
-    await setJSON('cajeros', cajeros);
-    // no reseteamos usuarios ni índice
-    return res.json({ ok: true, count: cajeros.length });
-  } catch (e) {
-    console.error('Error en /api/cajeros/init:', e);
-    return res.status(500).json({ error: 'Error interno' });
-  }
-});
+// health check (para cron-jobs.org u otro ping)
+app.get("/health", (_req, res) => res.json({ ok: true }));
 
-app.get('/health', (_req, res) => res.json({ ok: true }));
-
+// ------------ START ------------
 app.listen(PORT, () => {
-  console.log(`Backend corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Backend escuchando en puerto ${PORT}`);
 });
