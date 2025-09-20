@@ -44,24 +44,9 @@
   </div>
 
   <script>
-    const premios = [
-      "10% extra (en mi primera carga)",
-      "15% extra (en mi primera carga)",
-      "20% extra (en mi primera carga)",
-      "30% extra (en mi segunda carga)",
-      "100 fichas (sin carga, no retirables)",
-      "500 fichas (sin carga, no retirables)",
-      "300 fichas (sin carga, no retirables)"
-    ];
-
-    function getUserId() {
-      let uid = localStorage.getItem("ruleta_uid");
-      if (!uid) {
-        uid = "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-        localStorage.setItem("ruleta_uid", uid);
-      }
-      return uid;
-    }
+    // ---- CONFIGURACIÓN ----
+    const colores = ["#ff0000","#ff9900","#ffff00","#00ff00","#00ccff","#0066ff","#9900ff"];
+    const numSegments = 7; // solo para dibujo
 
     const canvas = document.getElementById("wheelCanvas");
     const ctx = canvas.getContext("2d");
@@ -72,17 +57,15 @@
     const solicitarBtn = document.getElementById("solicitarBtn");
     const closePopup = document.getElementById("closePopup");
 
-    const numSegments = premios.length;
     const anglePerSegment = (2 * Math.PI) / numSegments;
     let currentAngle = 0;
 
     function drawWheel() {
-      const colors = ["#ff0000","#ff9900","#ffff00","#00ff00","#00ccff","#0066ff","#9900ff"];
       for (let i = 0; i < numSegments; i++) {
         ctx.beginPath();
         ctx.moveTo(150,150);
         ctx.arc(150,150,150,i*anglePerSegment,(i+1)*anglePerSegment);
-        ctx.fillStyle = colors[i % colors.length];
+        ctx.fillStyle = colores[i % colores.length];
         ctx.fill();
         ctx.stroke();
       }
@@ -95,7 +78,7 @@
       popup.style.display = "flex";
       solicitarBtn.style.display = countdownText ? "none" : "inline-block";
 
-      if (!countdownText) {
+      if (!countdownText && cajero) {
         solicitarBtn.onclick = () => {
           const fecha = new Date().toLocaleString();
           const mensaje = `Hola, ${cajero.nombre}. Gané en la rueda de premios: ${premio} (${fecha}) y quisiera solicitarlo. Gracias!`;
@@ -124,12 +107,11 @@
           currentAngle = targetAngle;
           drawRotatedWheel(currentAngle);
 
-          // Pido resultado real al backend (cajero + premio + cooldown)
-          const usuarioId = getUserId();
-          fetch(`/girar`, {
+          // === NUEVO: pedir resultado real al backend ===
+          fetch('/girar', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ usuarioId })
+            credentials: "include" // importante para cookie de identificación
           })
           .then(r => r.json())
           .then(data => {
