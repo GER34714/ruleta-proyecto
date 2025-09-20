@@ -9,7 +9,7 @@ app.use(express.json());
 
 // ======== CONFIG ========
 const PORT = process.env.PORT || 3000;
-// Usa tu URL interna de Redis en Render
+// Usa tu URL interna de Redis en Render (Key-Value)
 const redis = new Redis(process.env.REDIS_URL || 'redis://red-d378b33uibrs738qtkjg:6379');
 
 // sirve el front (carpeta public que estará al lado de backend)
@@ -69,8 +69,7 @@ app.post('/girar', async (req, res) => {
   const now = Date.now();
   const DAY_MS = 24 * 60 * 60 * 1000;
 
-  let userData = await redis.hgetall(key);
-  // Si Redis devolvió algo que no sea hash, hgetall rompe => por eso limpiamos después
+  const userData = await redis.hgetall(key);
 
   if (userData && Object.keys(userData).length > 0) {
     const lastSpinTime = parseInt(userData.lastSpinTime || "0", 10);
@@ -123,20 +122,6 @@ app.post('/girar', async (req, res) => {
 
 // ======== RUTA DE SALUD ========
 app.get('/health', (_req, res) => res.json({ ok: true }));
-
-// ======== 🔧 RUTA TEMPORAL PARA LIMPIAR REDIS ========
-app.get('/fix-redis', async (req, res) => {
-  try {
-    const keys = await redis.keys('user:*');   // busca las claves de usuario
-    if (keys.length) {
-      await redis.del(...keys);                // borra todas
-    }
-    res.send(`✅ Redis limpio. Borradas ${keys.length} claves.`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error limpiando Redis');
-  }
-});
 
 // ======== INICIO SERVIDOR ========
 app.listen(PORT, () =>
