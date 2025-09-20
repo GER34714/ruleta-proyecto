@@ -33,6 +33,8 @@ button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem); bord
                border:3px solid #0ff; box-shadow:0 0 20px #0ff,0 0 40px #0ff,0 0 60px #0ff; transition:.4s; }
 #winnerPopup.show { transform:translate(-50%,-50%) scale(1); }
 #dailyCounter { margin-top:3px; font-size:clamp(0.8rem,2vw,0.95rem); color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
+#legalContainer { margin-top:15px; padding:10px; }
+.legal-text { font-size:clamp(0.7rem,2vw,0.9rem); margin:3px 0; color:#0ff; text-shadow:0 0 5px #000,0 0 8px #000; }
 @media(max-width:600px){#logoTop{max-width:60%;}#wheelContainer{width:85vw;}button{padding:10px 20px;}}
 </style>
 </head>
@@ -49,7 +51,6 @@ button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem); bord
 </div>
 
 <div id="wheelContainer">
-  <!-- ✅ El ID de este canvas es clave -->
   <canvas id="wheelCanvas" width="340" height="340"></canvas>
   <div id="arrow"></div>
 </div>
@@ -68,9 +69,12 @@ button { margin:5px 0; padding:12px 30px; font-size:clamp(1rem,2vw,1.2rem); bord
   <img id="finalImage" src="https://iili.io/KK0OCrl.md.png" alt="Imagen final">
 </div>
 
-<div id="legal">+18 | Juego Responsable</div>
+<!-- ✅ Mensajes legales -->
+<div id="legalContainer">
+  <div class="legal-text">+18 | Juego Responsable | Apuesta con moderación</div>
+  <div class="legal-text">Todos los derechos reservados FORTUNA PLAY™</div>
+</div>
 
-<!-- ✅ Script al final para que el DOM ya exista -->
 <script>
 document.addEventListener("DOMContentLoaded", function(){
 
