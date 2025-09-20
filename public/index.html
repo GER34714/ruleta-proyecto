@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ruleta de Premios</title>
+  <style>
+    body { margin:0; padding:0; font-family:Arial,sans-serif; background:#111; color:#fff; text-align:center; overflow-x:hidden; }
+    header img { width:100%; height:auto; display:block; }
+    h1 { font-size:1.8rem; margin:20px 0; color:#ffcc00; text-shadow:0 0 10px #ff00ff, 0 0 20px #00ffff; }
+    .wheel-container { position:relative; width:320px; margin:0 auto; }
+    #wheelCanvas { width:100%; height:auto; }
+    .indicator { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent; border-bottom:25px solid yellow; filter:drop-shadow(0 0 5px #ff0); }
+    #spinButton { margin-top:20px; background:#ff0000; color:#fff; font-size:1.5rem; padding:15px 40px; border:none; border-radius:12px; cursor:pointer; box-shadow:0 0 20px #ff00ff, 0 0 40px #ff00ff; animation:neonPulse 1.5s infinite alternate; }
+    #spinButton:disabled { background:gray; cursor:not-allowed; box-shadow:none; animation:none; }
+    @keyframes neonPulse { from{ box-shadow:0 0 10px #ff00ff, 0 0 20px #ff00ff } to{ box-shadow:0 0 20px #00ffff, 0 0 40px #00ffff } }
+    #popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:9999; }
+    #popupContent { background:#222; padding:20px; border-radius:15px; text-align:center; max-width:90%; box-shadow:0 0 20px #ffcc00; animation:popupIn .5s ease; }
+    @keyframes popupIn { from{ transform:scale(.5); opacity:0 } to{ transform:scale(1); opacity:1 } }
+    #popupContent h2 { font-size:2rem; margin-bottom:10px; color:#00ff99; }
+    #popupContent p  { margin:10px 0; font-size:1.2rem; }
+    #solicitarBtn { margin-top:15px; background:linear-gradient(45deg,#00ccff,#0066ff); color:#fff; font-size:1.2rem; padding:10px 20px; border:none; border-radius:10px; cursor:pointer; box-shadow:0 0 15px #00ccff; }
+    #closePopup { margin-top:15px; background:#ff3333; color:#fff; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header><img src="https://iili.io/KRwFVG2.md.jpg" alt="Banner Casino"></header>
+  <h1>🎉 GIRA LA RUEDA Y GANA INCREÍBLES PREMIOS! 🎁</h1>
+
+  <div class="wheel-container">
+    <div class="indicator"></div>
+    <canvas id="wheelCanvas" width="300" height="300"></canvas>
+  </div>
+  <button id="spinButton">GIRAR</button>
+
+  <div id="popup">
+    <div id="popupContent">
+      <h2>¡GANASTE! 🎉</h2>
+      <p id="premioTexto"></p>
+      <p id="extraTexto"></p>
+      <button id="solicitarBtn">Solicitar premio</button><br>
+      <button id="closePopup">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    const premios = [
+      "10% extra (en mi primera carga)",
+      "15% extra (en mi primera carga)",
+      "20% extra (en mi primera carga)",
+      "30% extra (en mi segunda carga)",
+      "100 fichas (sin carga, no retirables)",
+      "500 fichas (sin carga, no retirables)",
+      "300 fichas (sin carga, no retirables)"
+    ];
+
+    function getUserId() {
+      let uid = localStorage.getItem("ruleta_uid");
+      if (!uid) {
+        uid = "u_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem("ruleta_uid", uid);
+      }
+      return uid;
+    }
+
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    const spinButton = document.getElementById("spinButton");
+    const popup = document.getElementById("popup");
+    const premioTexto = document.getElementById("premioTexto");
+    const extraTexto = document.getElementById("extraTexto");
+    const solicitarBtn = document.getElementById("solicitarBtn");
+    const closePopup = document.getElementById("closePopup");
+
+    const numSegments = premios.length;
+    const anglePerSegment = (2 * Math.PI) / numSegments;
+    let currentAngle = 0;
+
+    function drawWheel() {
+      const colors = ["#ff0000","#ff9900","#ffff00","#00ff00","#00ccff","#0066ff","#9900ff"];
+      for (let i = 0; i < numSegments; i++) {
+        ctx.beginPath();
+        ctx.moveTo(150,150);
+        ctx.arc(150,150,150,i*anglePerSegment,(i+1)*anglePerSegment);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+    drawWheel();
+
+    function showPopup(premio, cajero, countdownText = null) {
+      premioTexto.innerText = countdownText ? countdownText : `FELICIDADES 🎉 Te ganaste: ${premio}`;
+      extraTexto.innerText = countdownText ? "" : "Recordá volver en 24 hs para volver a girar";
+      popup.style.display = "flex";
+      solicitarBtn.style.display = countdownText ? "none" : "inline-block";
+
+      if (!countdownText) {
+        solicitarBtn.onclick = () => {
+          const fecha = new Date().toLocaleString();
+          const mensaje = `Hola, ${cajero.nombre}. Gané en la rueda de premios: ${premio} (${fecha}) y quisiera solicitarlo. Gracias!`;
+          const url = `https://wa.me/54${cajero.numero}?text=${encodeURIComponent(mensaje)}`;
+          window.open(url, "_blank");
+        };
+      }
+    }
+
+    function spinWheel() {
+      spinButton.disabled = true;
+      const spinTime = 4000;
+      const spinAngle = Math.random() * 360 + 1800;
+      const startAngle = currentAngle;
+      const targetAngle = startAngle + spinAngle;
+      const startTime = performance.now();
+
+      function animate(time) {
+        let elapsed = time - startTime;
+        if (elapsed < spinTime) {
+          const progress = elapsed / spinTime;
+          currentAngle = startAngle + (spinAngle * (1 - Math.pow(1 - progress, 3)));
+          drawRotatedWheel(currentAngle);
+          requestAnimationFrame(animate);
+        } else {
+          currentAngle = targetAngle;
+          drawRotatedWheel(currentAngle);
+
+          // Pido resultado real al backend (cajero + premio + cooldown)
+          const usuarioId = getUserId();
+          fetch(`/girar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usuarioId })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.yaGiro) {
+              showPopup(null, null, data.mensaje);
+            } else {
+              showPopup(data.premio, data.cajero);
+            }
+          })
+          .catch(() => {
+            showPopup(null, null, "Hubo un error. Probá de nuevo en unos segundos.");
+          })
+          .finally(() => { spinButton.disabled = false; });
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    function drawRotatedWheel(angle) {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.save();
+      ctx.translate(150,150);
+      ctx.rotate(angle * Math.PI / 180);
+      ctx.translate(-150,-150);
+      drawWheel();
+      ctx.restore();
+    }
+
+    spinButton.addEventListener("click", spinWheel);
+    closePopup.addEventListener("click", () => { popup.style.display = "none"; });
+  </script>
+</body>
+</html>
