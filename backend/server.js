@@ -18,15 +18,15 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 // ======== DATOS EN MEMORIA ========
 // premios grandes que salen solo 1 vez al día
 const premiosGrandes = [
-  "30% extra (en tu segunda carga)",
+  "30% extra (en la segunda carga)",
   "500 fichas (sin carga, no retirables)"
 ];
 
 // premios normales que se intercalan
 const premiosNormales = [
-  "10% extra (en tu primera carga)",
-  "15% extra (en tu primera carga)",
-  "20% extra (en tu primera carga)",
+  "10% extra (en la primera carga)",
+  "15% extra (en la primera carga)",
+  "20% extra (en la primera carga)",
   "100 fichas (sin carga, no retirables)",
   "300 fichas (sin carga, no retirables)"
 ];
