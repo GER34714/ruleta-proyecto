@@ -197,7 +197,7 @@ function requestResult(){
       winnerReturn.textContent = "⏳ Podrás volver a girar en 24 horas. El premio se acredita en tu segunda carga.";
       winnerBtn.onclick = () => {
         const msg = encodeURIComponent(
-          `Hola ${data.cajero.nombre}! Gané ${data.premio} el ${new Date().toLocaleString()} (en tu segunda carga) y quisiera reclamarlo.`
+          `Hola ${data.cajero.nombre}! Gané ${data.premio} el ${new Date().toLocaleString()} y quisiera reclamarlo.`
         );
         window.open(`https://wa.me/54${data.cajero.numero}?text=${msg}`,"_blank");
       };
