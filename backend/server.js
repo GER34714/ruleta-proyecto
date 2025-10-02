@@ -35,7 +35,7 @@ const premiosNormales = [
 const cajeros = [
   { nombre: "Joaki", numero: "1123365501" },
   { nombre: "Facu",  numero: "1125127839" },
-  { nombre: "Lucas", numero: "1171334027" }
+  
 ];
 
 let currentCajeroIndex = 0; // round-robin para primer asignación
